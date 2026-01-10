@@ -193,6 +193,25 @@ client.on('interactionCreate', async interaction => {
                 const flag = blacklistedGroups.includes(group.group.id) ? '🚩' : '';
                 groupsList += `${flag} **${group.group.name}** - ${group.role.name}\n`;
             }
+            // see if the group list is too long to embed
+            // if so, embed two messages
+            if (groupsList.length > 2048) {
+                const midIndex = Math.floor(groupsList.length / 2);
+                let splitIndex = groupsList.indexOf('\n', midIndex);
+                if (splitIndex === -1) splitIndex = midIndex;
+                const firstEmbed = groupsList.substring(0, splitIndex);
+                const secondEmbed = groupsList.substring(splitIndex + 1);
+                const embed1 = new MessageEmbed()
+                    .setTitle(`${username}'s Roblox Groups (Part 1)`)
+                    .setDescription(firstEmbed)
+                    .setColor('#ff0000');
+                const embed2 = new MessageEmbed()
+                    .setTitle(`${username}'s Roblox Groups (Part 2)`)
+                    .setDescription(secondEmbed)
+                    .setColor('#ff0000');
+                interaction.reply({ embeds: [embed1, embed2] });
+                return;
+            }
 
             const embed = new MessageEmbed()
                 .setTitle(`${username}'s Roblox Groups`)

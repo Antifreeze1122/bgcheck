@@ -192,17 +192,15 @@ client.on('interactionCreate', async interaction => {
             }
 
             let groupsList = '';
+
             for (const group of groupsData.data) {
-                const flag = blacklistedGroupsNS.includes(group.group.id) ? '🚩' : '';
-                groupsList += `${flag} **${group.group.name}** - ${group.role.name}\n`;
-            }
-            for (const group of groupsData.data) {
-                const flag = blacklistedGroupsNLA.includes(group.group.id) ? '🟧' : '';
-                groupsList += `${flag} **${group.group.name}** - ${group.role.name}\n`;
-            }
-            for (const group of groupsData.data) {
-                const flag = blacklistedGroupsUniversal.includes(group.group.id) ? '🔵' : '';
-                groupsList += `${flag} **${group.group.name}** - ${group.role.name}\n`;
+                let flags = '';
+
+                if (blacklistedGroupsNS.includes(group.group.id)) flags += '🚩';
+                if (blacklistedGroupsNLA.includes(group.group.id)) flags += '🟧';
+                if (blacklistedGroupsUniversal.includes(group.group.id)) flags += '🔵';
+
+                groupsList += `${flags} **${group.group.name}** - ${group.role.name}\n`;
             }
             // see if the group list is too long to embed
             // if so, embed two messages
@@ -250,13 +248,6 @@ client.on('interactionCreate', async interaction => {
             });
 
             await interaction.reply({ embeds });
-
-            const embed = new MessageEmbed()
-                .setTitle(`${username}'s Roblox Groups`)
-                .setDescription(groupsList)
-                .setColor('#ff0000');
-
-            interaction.reply({ embeds: [embed] });
 
         } catch (error) {
             console.error(error);

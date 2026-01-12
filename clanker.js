@@ -223,6 +223,9 @@ client.on('interactionCreate', async interaction => {
                 interaction.reply({ embeds: [embed1, embed2] });
                 return;
             }
+            if (groupsList.length == 4000) {
+                groupsList = groupsList.substring(0, 2048 - 50) + '\n...and {groupsList.length - 4000} more';
+            }
 
             const embed = new MessageEmbed()
                 .setTitle(`${username}'s Roblox Groups`)

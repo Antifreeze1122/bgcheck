@@ -206,26 +206,50 @@ client.on('interactionCreate', async interaction => {
             }
             // see if the group list is too long to embed
             // if so, embed two messages
-            if (groupsList.length > 2048) {
-                const midIndex = Math.floor(groupsList.length / 2);
-                let splitIndex = groupsList.indexOf('\n', midIndex);
-                if (splitIndex === -1) splitIndex = midIndex;
-                const firstEmbed = groupsList.substring(0, splitIndex);
-                const secondEmbed = groupsList.substring(splitIndex + 1);
-                const embed1 = new MessageEmbed()
-                    .setTitle(`${username}'s Roblox Groups (Part 1)`)
-                    .setDescription(firstEmbed)
-                    .setColor('#ff0000');
-                const embed2 = new MessageEmbed()
-                    .setTitle(`${username}'s Roblox Groups (Part 2)`)
-                    .setDescription(secondEmbed)
-                    .setColor('#ff0000');
-                interaction.reply({ embeds: [embed1, embed2] });
-                return;
+            const MAX = 2048;
+
+            // Safely split text into chunks no larger than 2048 chars
+            function splitToEmbeds(text, maxParts = 3) {
+                const lines = text.split("\n");
+                const parts = [];
+                let current = "";
+
+                for (const line of lines) {
+                    // If adding this line would exceed the limit, push current and start new
+                    if ((current + line + "\n").length > MAX) {
+                        parts.push(current.trim());
+                        current = line + "\n";
+
+                        // Stop at maxParts
+                        if (parts.length === maxParts - 1) break;
+                    } else {
+                        current += line + "\n";
+                    }
+                }
+
+                // Add whatever remains
+                if (parts.length < maxParts && current.trim().length > 0) {
+                    parts.push(current.trim());
+                }
+
+                return parts;
             }
-            if (groupsList.length == 4000) {
-                groupsList = groupsList.substring(0, 2048 - 50) + '\n...and {groupsList.length - 4000} more';
-            }
+
+            const chunks = splitToEmbeds(groupsList, 3);
+
+            const embeds = chunks.map((chunk, i) => {
+                // Absolute final safety — truncate if somehow still too long
+                if (chunk.length > MAX) {
+                    chunk = chunk.substring(0, MAX - 3) + "...";
+                }
+
+                return new MessageEmbed()
+                    .setTitle(`${username}'s Roblox Groups (Part ${i + 1})`)
+                    .setDescription(chunk)
+                    .setColor("#ff0000");
+            });
+
+            await interaction.reply({ embeds });
 
             const embed = new MessageEmbed()
                 .setTitle(`${username}'s Roblox Groups`)

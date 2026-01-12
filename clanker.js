@@ -15,8 +15,9 @@ const client = new Client({
 });
 
 // Array of blacklisted group IDs
-const blacklistedGroups = [795699811, 33700249];
-
+const blacklistedGroupsNS = [795699811, 33700249]; // 🚩
+const blacklistedGroupsNLA = []; // 🟧
+const blacklistedGroupsUniversal = []; // 🔵 (condo games and such)
 
 // =========================
 // LOG USER ONCE (INSTALL TRACKING)
@@ -190,7 +191,15 @@ client.on('interactionCreate', async interaction => {
 
             let groupsList = '';
             for (const group of groupsData.data) {
-                const flag = blacklistedGroups.includes(group.group.id) ? '🚩' : '';
+                const flag = blacklistedGroupsNS.includes(group.group.id) ? '🚩' : '';
+                groupsList += `${flag} **${group.group.name}** - ${group.role.name}\n`;
+            }
+            for (const group of groupsData.data) {
+                const flag = blacklistedGroupsNLA.includes(group.group.id) ? '🟧' : '';
+                groupsList += `${flag} **${group.group.name}** - ${group.role.name}\n`;
+            }
+            for (const group of groupsData.data) {
+                const flag = blacklistedGroupsUniversal.includes(group.group.id) ? '🔵' : '';
                 groupsList += `${flag} **${group.group.name}** - ${group.role.name}\n`;
             }
             // see if the group list is too long to embed

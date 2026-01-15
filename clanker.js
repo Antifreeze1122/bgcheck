@@ -19,8 +19,8 @@ const blacklistedGroupsNS = [795699811, 33700249,13670820,8801488,35494044,
                             34244533,13300798,11577231,35490443,15956028,
                             181910361]; // 🚩
 const blacklistedGroupsNLA = []; // 🟧
-const blacklistedGroupsUniversal = []; // 🔵 (condo games and such)
-
+const blacklistedGroupsUniversal = []; // 🔵 
+const blacklistedGroupsDivisional = [];
 // =========================
 // LOG USER ONCE (INSTALL TRACKING)
 // =========================
@@ -206,7 +206,7 @@ client.on('interactionCreate', async interaction => {
             // if so, embed two messages
             const MAX = 2048;
 
-            // Safely split text into chunks no larger than 2048 chars
+            // split text into embeds no larger than 2048 chars
             function splitToEmbeds(text, maxParts = 3) {
                 const lines = text.split("\n");
                 const parts = [];

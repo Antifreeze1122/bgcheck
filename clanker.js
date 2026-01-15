@@ -21,6 +21,7 @@ const blacklistedGroupsNS = [795699811, 33700249,13670820,8801488,35494044,
 const blacklistedGroupsNLA = []; // 🟧
 const blacklistedGroupsUniversal = []; // 🔵 
 const blacklistedGroupsDivisional = [784410940,526419965]; //⁉️
+
 // =========================
 // LOG USER ONCE (INSTALL TRACKING)
 // =========================
@@ -199,7 +200,7 @@ client.on('interactionCreate', async interaction => {
                 if (blacklistedGroupsNS.includes(group.group.id)) flags += '🚩';
                 if (blacklistedGroupsNLA.includes(group.group.id)) flags += '🟧';
                 if (blacklistedGroupsUniversal.includes(group.group.id)) flags += '🔵';
-
+                if (blacklistedGroupsDivisional.includes(group.group.id)) flags += '⁉️';
                 groupsList += `${flags} **${group.group.name}** - ${group.role.name}\n`;
             }
             // see if the group list is too long to embed

@@ -20,7 +20,7 @@ const blacklistedGroupsNS = [795699811, 33700249,13670820,8801488,35494044,
                             181910361]; // 🚩
 const blacklistedGroupsNLA = []; // 🟧
 const blacklistedGroupsUniversal = []; // 🔵 
-const blacklistedGroupsDivisional = [];
+const blacklistedGroupsDivisional = [784410940,526419965]; //⁉️
 // =========================
 // LOG USER ONCE (INSTALL TRACKING)
 // =========================

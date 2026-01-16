@@ -17,7 +17,7 @@ const client = new Client({
 // Array of blacklisted group IDs
 const blacklistedGroupsNS = [795699811, 33700249,13670820,8801488,35494044,
                             34244533,13300798,11577231,35490443,15956028,
-                            181910361]; // 🚩
+                            181910361,13363571]; // 🚩
 const blacklistedGroupsNLA = []; // 🟧
 const blacklistedGroupsUniversal = []; // 🔵 
 const blacklistedGroupsDivisional = [784410940,526419965]; //⁉️

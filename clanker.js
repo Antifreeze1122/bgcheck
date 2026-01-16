@@ -90,13 +90,13 @@ client.on('ready', async () => {
             ]
         },
         {
-            name: 'Group Report',
+            name: 'groupreport',
             description: 'Report a group to the bot owner',
             options: [
                 {
-                    name: 'groupLink',
+                    name: 'grouplink',
                     type: 3,
-                    description: 'Link to the group',
+                    description: 'Link to the Roblox group',
                     required: true
                 }
             ]
@@ -267,34 +267,32 @@ client.on('interactionCreate', async interaction => {
             interaction.reply('An error occurred while fetching the groups.');
         }
     }
-    if (interaction.commandName === 'Group Report') {
-        // Log the reported group link to a json file, create it if it doesn't exist
-        const groupLink = interaction.options.getString('groupLink');
-        const filePath = 'groupReports.json';
-        const newReport = {
-            discordUserId: interaction.user.id,
-            discordUsername: interaction.user.tag,
-            groupLink: groupLink,
-            reportedAt: new Date().toISOString()
-        };
-        let reports = [];
+    if (interaction.commandName === 'groupreport') {
+    const groupLink = interaction.options.getString('grouplink');
 
-        try {
-            if (fs.existsSync(filePath)) {
-                const data = fs.readFileSync(filePath, 'utf8');
-                if (data.trim()) {
-                    reports = JSON.parse(data);
-                }
-            }
-            reports.push(newReport);
-            fs.writeFileSync(filePath, JSON.stringify(reports, null, 2));
-            console.log(`New group report logged: ${groupLink} by ${interaction.user.tag}`);
-            interaction.reply('Thank you for your report. The bot owner has been notified.');
-        } catch (error) {
-            console.error('Error logging group report:', error);
-            interaction.reply('An error occurred while submitting your report.');
-        }
-    }  
+    const filePath = 'groupReports.json';
+
+    let reports = [];
+
+    if (fs.existsSync(filePath)) {
+        const data = fs.readFileSync(filePath, 'utf8');
+        if (data.trim()) reports = JSON.parse(data);
+    }
+
+    reports.push({
+        discordUserId: interaction.user.id,
+        discordUsername: interaction.user.tag,
+        groupLink,
+        reportedAt: new Date().toISOString()
+    });
+
+    fs.writeFileSync(filePath, JSON.stringify(reports, null, 2));
+
+    return interaction.reply({
+        content: '✅ Group reported successfully.',
+        ephemeral: true
+    });
+}
 });
-
 client.login(token);
+

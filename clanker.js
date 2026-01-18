@@ -3,6 +3,7 @@
 
 require('dotenv').config();
 const token = process.env.token;
+const ownerID = process.env.owner_id;
 
 const { Client, Intents, MessageEmbed } = require('discord.js');
 const { REST } = require('@discordjs/rest');
@@ -21,7 +22,15 @@ const blacklistedGroupsNS = [795699811,33700249,13670820,8801488,35494044,
 const blacklistedGroupsNLA = []; // 🟧
 const blacklistedGroupsUniversal = [9948704,3331780,1035713,33821543,7424914,36058773,35991486,16410374,35785938,35934502,13770582,35661886,17284863,34408471,32608979,1653,34152807,36036768,1029384,13764554,32409814,352220069,34437676,34816688,34507413,33700616,17151715,34591449,34673231,34793524,33693571,34586807,35969048,11094955,16120327,34556014,5008654,8334802,10096972,34093888,8570423,17301036,34779486,15597714,143355]; // 🔵 
 const blacklistedGroupsDivisional = [784410940,526419965]; //⁉️
-
+const flaggedGroups = // from flaggedIDs.txt, put into an array
+    fs.existsSync('flaggedIDs.txt') ?
+    fs.readFileSync('flaggedIDs.txt', 'utf8')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => parseInt(line)) :
+    [];
+console.log(`Flagged Groups Loaded: ${flaggedGroups}`);
 // =========================
 // LOG USER ONCE (INSTALL TRACKING)
 // =========================
@@ -100,6 +109,17 @@ client.on('ready', async () => {
                     required: true
                 }
             ]
+        },
+        {
+            name: 'clearreports',
+            description: 'Clear all group reports (bot owner only)',
+            options: [
+                { name: 'confirm',
+                  type: 5,
+                  description: 'Type true to confirm',
+                  required: true
+                }
+            ]  
         }
     ];
 
@@ -171,8 +191,6 @@ client.on('interactionCreate', async interaction => {
             interaction.reply('An error occurred while fetching the avatar.');
         }
     }
-
-
     if (interaction.commandName === 'groups') {
         const username = interaction.options.getString('username');
 
@@ -213,6 +231,7 @@ client.on('interactionCreate', async interaction => {
                 if (blacklistedGroupsNLA.includes(group.group.id)) flags += '🟧';
                 if (blacklistedGroupsUniversal.includes(group.group.id)) flags += '🔵';
                 if (blacklistedGroupsDivisional.includes(group.group.id)) flags += '⁉️';
+                if (flaggedGroups.includes(group.group.id)) flags += '⚠️';
                 groupsList += `${flags} **${group.group.name}** - ${group.role.name}\n`;
             }
             // see if the group list is too long to embed
@@ -268,31 +287,104 @@ client.on('interactionCreate', async interaction => {
         }
     }
     if (interaction.commandName === 'groupreport') {
-    const groupLink = interaction.options.getString('grouplink');
+        let groupLink = interaction.options.getString('grouplink').trim();
 
-    const filePath = 'groupReports.json';
+        // Remove Discord < >
+        groupLink = groupLink.replace(/^<|>$/g, '');
 
-    let reports = [];
+        // Extract group ID from BOTH formats
+        const match = groupLink.match(/(?:groups|communities)\/(\d+)/i);
 
-    if (fs.existsSync(filePath)) {
-        const data = fs.readFileSync(filePath, 'utf8');
-        if (data.trim()) reports = JSON.parse(data);
+        if (!match) {
+            console.log('INVALID GROUP LINK:', groupLink);
+            return interaction.reply({
+                content: '❌ Invalid Roblox group link.',
+                ephemeral: true
+            });
+        }
+
+        const groupId = Number(match[1]);
+
+        const reportsFile = 'groupReports.json';
+        const flaggedFile = 'flaggedIDs.txt';
+
+        let reports = [];
+        if (fs.existsSync(reportsFile)) {
+            const data = fs.readFileSync(reportsFile, 'utf8');
+            if (data.trim()) reports = JSON.parse(data);
+        }
+
+        // Prevent duplicate reports by same user
+        const alreadyReported = reports.some(
+            r => r.discordUserId === interaction.user.id && r.groupId === groupId
+        );
+
+        if (alreadyReported) {
+            return interaction.reply({
+                content: '⚠️ You already reported this group.',
+                ephemeral: true
+            });
+        }
+
+        // Save report
+        reports.push({
+            discordUserId: interaction.user.id,
+            discordUsername: interaction.user.tag,
+            groupId,
+            groupLink,
+            reportedAt: new Date().toISOString()
+        });
+
+        fs.writeFileSync(reportsFile, JSON.stringify(reports, null, 2));
+
+        // Flag group globally
+        if (!flaggedGroups.includes(groupId)) {
+            flaggedGroups.push(groupId);
+            fs.appendFileSync(flaggedFile, groupId + '\n');
+        }
+
+        // Notify owner
+        const owner = await client.users.fetch(ownerID);
+        owner.send(
+            `🚨 **New Group Report**\n` +
+            `Group ID: ${groupId}\n` +
+            `Link: ${groupLink}\n` +
+            `Reported by: ${interaction.user.tag}`
+        ).catch(() => {});
+
+        return interaction.reply({
+            content: '✅ Group reported and flagged.',
+            ephemeral: true
+        });
     }
-
-    reports.push({
-        discordUserId: interaction.user.id,
-        discordUsername: interaction.user.tag,
-        groupLink,
-        reportedAt: new Date().toISOString()
-    });
-
-    fs.writeFileSync(filePath, JSON.stringify(reports, null, 2));
-
-    return interaction.reply({
-        content: '✅ Group reported successfully.',
-        ephemeral: true
-    });
-}
+    if (interaction.commandName === 'clearreports') {
+        const confirm = interaction.options.getBoolean('confirm');
+        const userID = interaction.user.id;
+        if (userID !== ownerID) {
+            return interaction.reply({ 
+                content: 'Missing permissions.',
+                ephemeral: true
+            });
+        }
+        if (!confirm) {
+            return interaction.reply({
+                content: 'Action cancelled.',
+                ephemeral: true
+            });
+        }
+        const filePath = 'groupReports.json';
+        if (fs.existsSync(filePath)) {
+            fs.writeFileSync('groupReports.json', JSON.stringify([], null, 2));
+        }
+        if (fs.existsSync('flaggedIDs.txt')) {
+            fs.writeFileSync('flaggedIDs.txt', '');
+            fs.writeFileSync('flaggedIDs.txt', '');
+        }
+        return interaction.reply({
+            content: '✅ All group reports cleared.',
+            ephemeral: true
+        });
+    }
 });
-client.login(token);
 
+client.login(token);

@@ -120,6 +120,10 @@ client.on('ready', async () => {
                   required: true
                 }
             ]  
+        },
+        {  
+            name: 'key',
+            description: 'Show group flag meanings'
         }
     ];
 
@@ -384,6 +388,21 @@ client.on('interactionCreate', async interaction => {
             content: '✅ All group reports cleared.',
             ephemeral: true
         });
+    }
+    if (interaction.commandName === 'key') {
+        const description =
+                '🚩 - Blacklisted Tellus wide\n' +
+                '🟧 - Blacklisted by NLA\n' +
+                '🔵 - Confirmed bad group\n' +
+                '⁉️ - Divisional Blacklist\n' +
+                '⚠️ - Reported by users';
+
+        const embed = new EmbedBuilder()
+            .setTitle('Group Flag Key')
+            .setDescription(description)
+            .setColor('#00ff00');
+
+        return interaction.reply({ embeds: [embed] });
     }
 });
 
